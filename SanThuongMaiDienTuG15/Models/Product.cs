@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
+#nullable disable
 namespace SanThuongMaiDienTuG15.Models
 {
     public partial class Product
