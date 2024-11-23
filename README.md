@@ -1,1 +1,2 @@
 # SanThuongMaiDienTuG15
+ASPNET CORE VERSION 6.0
