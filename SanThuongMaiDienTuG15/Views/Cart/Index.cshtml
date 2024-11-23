@@ -1,0 +1,287 @@
+﻿@model List<SanThuongMaiDienTuG15.ModelViews.CartItem>
+
+@{
+    ViewData["Title"] = "Index";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<!-- Begin Main Content Area -->
+<main class="main-content">
+    <div class="breadcrumb-area breadcrumb-height" data-bg-image="assets/images/breadcrumb/bg/b1.png">
+        <div class="container h-100">
+            <div class="row h-100">
+                <div class="col-lg-12">
+                    <div class="breadcrumb-item">
+                        <h2 class="breadcrumb-heading">Giỏ Hàng</h2>
+                        <ul>
+                            <li>
+                                <a href="index.html">Trang chủ<i class="pe-7s-angle-right"></i></a>
+                            </li>
+                            <li>Giỏ hàng</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="cart-area section-space-y-axis-100">
+        <div class="container">
+            <div class="row">
+                <div class="col-12">
+                    @if(Model != null && Model.Count()>0)
+                    {
+                        <form action="javascript:void(0)">
+                            <div class="table-content table-responsive">
+                                <table class="table">
+                                    <thead>
+                                        <tr>
+                                            <th class="product_remove">Bỏ</th>
+                                            <th class="product-thumbnail">Anh sản phẩm</th>
+                                            <th class="cart-product-name">Sản phẩm</th>
+                                            <th class="product-price">Đơn giá</th>
+                                            <th class="product-quantity">Số lượng</th>
+                                            <th class="product-subtotal">Thành tiền</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @if (Model != null && Model.Count() > 0)
+                                        {
+                                            foreach (var item in Model)
+                                            {
+                                                <tr data-product-id="@item.product.ProductId">
+                                                    <td class="product_remove">
+                                                        <a href="javascript:void(0)" class="remove-item" data-id="@item.product.ProductId">
+                                                            <i class="pe-7s-close" title="Remove"></i>
+                                                        </a>
+                                                    </td>
+                                                    <td class="product-thumbnail">
+                                                        <a href="javascript:void(0)">
+                                                            <img src="~/assets/images/product/@item.product.Thumb" alt="@item.product.ProductName">
+                                                        </a>
+                                                    </td>
+                                                    <td class="product-name"><a href="javascript:void(0)">@item.product.ProductName</a></td>
+                                                    <td class="product-price"><span class="amount">@item.product.Price $</span></td>
+                                                    <td class="quantity">
+                                                        <div class="cart-plus-minus">
+                                                            <input data-mahh="@item.product.ProductId" data-id="@item.product.ProductId" data-dongia="@item.product.Price" class="cartItem cart-plus-minus-box" value="@item.quantity" type="number" min="1">
+                                                        </div>
+                                                    </td>
+                                                    <td class="product-subtotal"><span class="amount">@item.TotalMoney $</span></td>
+                                                </tr>
+                                            }
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="row">
+                                <div class="col-12">
+                                    
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-5 ml-auto">
+                                    <div class="cart-page-total">
+                                        <h2>Tổng đơn hàng</h2>
+                                        <ul>
+                                            <li>Thành tiền <span id="totalAmount">@Model.Sum(x => x.TotalMoney) $</span></li>
+                                        </ul>
+                                        @if(User.Identity.IsAuthenticated)
+                                        {
+                                            <a href="/checkout.html" class="btn btn-secondary btn-primary-hover" >Thanh toán</a>
+                                        }else
+                                        {
+                                            <a href="/dang-nhap.html?returnUrl=/checkout.html" class="btn btn-secondary btn-primary-hover">Thanh toán</a>
+                                        }
+                                        
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                    }
+                     else
+                    {
+                        <p>Chưa có sản phẩm trong giỏ hàng</p>
+                    }    
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+<!-- Main Content Area End Here -->
+@section Scripts {
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            document.querySelectorAll(".product_remove .remove-item").forEach(button => {
+                button.addEventListener("click", function (event) {
+                    event.preventDefault();
+
+                    // Lấy ID từ attribute data-id
+                    const productId = this.getAttribute('data-id');
+                    const productRow = this.closest("tr");
+                  
+
+                    // Chi tiết log
+                    console.log("Raw Product ID:", productId);
+                    console.log("Parsed Product ID:", parseInt(productId));
+                    console.log("Product Row:", productRow);
+
+                    // Kiểm tra kỹ hơn
+                    if (!productId) {
+                        alert("Không thể xác định mã sản phẩm.");
+                        return;
+                    }
+
+                    const parsedProductId = parseInt(productId, 10);
+
+                    if (isNaN(parsedProductId) || parsedProductId <= 0) {
+                        alert("Mã sản phẩm không hợp lệ.");
+                        return;
+                    }
+
+                    if (!confirm("Bạn có chắc chắn muốn xóa sản phẩm này khỏi giỏ hàng?")) return;
+                    const productPrice = parseFloat(productRow.querySelector(".product-price .amount").innerText.replace(/[^0-9.-]+/g, ""));
+                    const productQuantity = parseInt(productRow.querySelector(".cart-plus-minus-box").value);
+                    fetch("/Cart/RemoveFromCart", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify({ productId: parsedProductId })
+                    })
+                        .then(response => response.json())
+                        .then(data => {
+                            // Log toàn bộ response
+                            console.log("Full Server Response:", data);
+
+                            if (data.success) {
+                                productRow.remove();
+                                alert(data.message || "Sản phẩm đã được xóa khỏi giỏ hàng.");
+
+                                updateTotalAmount(productPrice, productQuantity);
+
+                                // Gọi hàm loadHeaderCart để cập nhật giỏ hàng
+                                loadHeaderCart();
+                                // reload lại trang
+                                // location.reload();
+                            } else {
+                                // Hiển thị thông báo chi tiết từ server
+                                alert(data.message || "Có lỗi xảy ra khi xóa sản phẩm.");
+                                console.error("Remove failed. Error details:", data);
+                            }
+                        })
+                        .catch(error => {
+                            console.error("Network or parsing error:", error);
+                            alert("Có lỗi kết nối. Vui lòng thử lại.");
+                        });
+                });
+
+            });
+        });
+
+
+        document.addEventListener("DOMContentLoaded", function () {
+            document.querySelectorAll(".cart-plus-minus-box").forEach(input => {
+                input.addEventListener("input", function () {
+                    const productId = this.getAttribute("data-id");
+                    const newQuantity = parseInt(this.value);
+                    const productRow = this.closest("tr");
+                    const productPrice = parseFloat(productRow.querySelector(".product-price .amount").innerText.replace(/[^0-9.-]+/g, ""));
+
+                    if (isNaN(newQuantity) || newQuantity <= 0) {
+                        alert("Số lượng không hợp lệ. Vui lòng nhập số lượng lớn hơn 0.");
+                        return;
+                    }
+
+                    // Gửi yêu cầu cập nhật số lượng lên server nếu cần thiết
+                    fetch("/Cart/UpdateQuantity", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify({ productId: parseInt(productId), quantity: newQuantity })
+                    })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                // Tính thành tiền mới cho sản phẩm
+                                const newTotalMoney = productPrice * newQuantity;
+                                productRow.querySelector(".product-subtotal .amount").innerText = newTotalMoney.toLocaleString('en-US', { style: 'currency', currency: 'USD' });
+
+                                // Cập nhật lại tổng tiền của giỏ hàng
+                                updateTotalQuantity();
+                                // location.reload();
+                            } else {
+                                alert(data.message || "Có lỗi xảy ra khi cập nhật số lượng.");
+                            }
+                        })
+                        .catch(error => {
+                            console.error("Lỗi kết nối:", error);
+                            alert("Có lỗi xảy ra, vui lòng thử lại.");
+                        });
+                });
+            });
+        });
+
+        function updateTotalQuantity() {
+            const totalAmountElement = document.getElementById("totalAmount");
+            let newTotal = 0;
+
+            // Tính tổng tất cả sản phẩm trong giỏ hàng
+            document.querySelectorAll(".product-subtotal .amount").forEach(amountElement => {
+                const productTotal = parseFloat(amountElement.innerText.replace(/[^0-9.-]+/g, ""));
+                if (!isNaN(productTotal)) {
+                    newTotal += productTotal;
+                }
+            });
+
+            // Cập nhật tổng tiền trên giao diện
+            totalAmountElement.innerText = newTotal.toLocaleString('en-US') + "$";
+        }
+
+
+        function updateTotalAmount(productPrice, productQuantity) {
+            const totalAmountElement = document.getElementById("totalAmount");
+            let currentTotal = parseFloat(totalAmountElement.innerText.replace(/[^0-9.-]+/g, ""));
+
+            // Kiểm tra xem giá trị hiện tại có phải là số không
+            if (isNaN(currentTotal)) {
+                alert("Tổng tiền hiện tại không hợp lệ.");
+                return;
+            }
+
+            // Trừ đi giá trị của sản phẩm
+            const amountToSubtract = productPrice * productQuantity;
+
+            // Cập nhật tổng mới
+            currentTotal -= amountToSubtract;
+            console.log("Current Total:", currentTotal);
+            // Cập nhật thành tiền trên giao diện
+            totalAmountElement.innerText = currentTotal.toLocaleString('en-US') + "$";
+        }
+
+       
+
+        //Hàm để cập nhật header giỏ hàng
+        function loadHeaderCart() {
+            fetch("/AjaxContent/HeaderCart", {
+                method: "GET",
+                cache: "no-cache"
+            })
+                .then(response => response.text())
+                .then(html => {
+                    document.getElementById("miniCart").innerHTML = html;
+                });
+
+            fetch("/AjaxContent/NumberCart", {
+                method: "GET",
+                cache: "no-cache"
+            })
+                .then(response => response.text())
+                .then(html => {
+                    document.getElementById("numberCart").innerHTML = html;
+                });
+        }
+        
+       
+    </script>
+}
