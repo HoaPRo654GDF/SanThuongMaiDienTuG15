@@ -1,0 +1,46 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>Baithi</title>
+
+    <!-- Favicon -->
+    <link rel="shortcut icon" href="~/Adminassets/images/logo/favicon.png">
+
+    <!-- page css -->
+    <link href="~/Adminassets/vendors/bootstrap-datepicker/bootstrap-datepicker.min.css" rel="stylesheet">
+
+    <!-- Core css -->
+    <link href="~/Adminassets/css/app.min.css" rel="stylesheet">
+
+</head>
+
+<body>
+    <div >
+        @await Html.PartialAsync("_HeaderPartialView.cshtml")
+        </div>
+        <div style="min-height:100vh">
+            @RenderBody()
+        </div>
+        <div>
+        <footer style="margin-top: auto;">
+            @await Html.PartialAsync("_FooterPartialView.cshtml")
+        </footer>
+         </div>
+    <!-- Core Vendors JS -->
+    <script src="~/Adminassets/js/vendors.min.js"></script>
+
+    <!-- page js -->
+    <script src="~/Adminassets/vendors/chartjs/Chart.min.js"></script>
+    <script src="~/Adminassets/js/pages/dashboard-e-commerce.js"></script>
+
+    <!-- Core JS -->
+    <script src="~/Adminassets/js/app.min.js"></script>
+    @await Component.InvokeAsync("Notyf")
+    @await RenderSectionAsync("Scripts", required: false)
+
+</body>
+
+</html>

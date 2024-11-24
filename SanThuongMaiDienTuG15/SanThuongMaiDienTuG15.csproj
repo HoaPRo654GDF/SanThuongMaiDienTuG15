@@ -22,6 +22,8 @@
 
   <ItemGroup>
     <Folder Include="Areas\Admin\Data\" />
+    <Folder Include="Areas\Baithi\Data\" />
+    <Folder Include="Areas\Baithi\Models\" />
   </ItemGroup>
 
 </Project>
