@@ -29,9 +29,33 @@ namespace SanThuongMaiDienTuG15.Controllers
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
 
-            _context.Products.Add(product);
-            _context.SaveChanges();
-            return Ok();
+            var existingProduct = _context.Products.Find(product.ProductId);
+            if (existingProduct == null) return NotFound();
+
+            // Giữ lại các trường c
+            existingProduct.ProductName = existingProduct.ProductName;
+            existingProduct.Description = existingProduct.Description;
+            existingProduct.CatId = existingProduct.CatId;
+            existingProduct.Price = existingProduct.Price;
+            existingProduct.Quantity = existingProduct.Quantity;
+            existingProduct.SellerId = existingProduct.SellerId;
+            existingProduct.DatePosted = existingProduct.DatePosted;
+            existingProduct.ImageUrl = existingProduct.ImageUrl;
+            existingProduct.ProductStatus = existingProduct.ProductStatus;
+            existingProduct.Thumb = existingProduct.Thumb;
+
+            // Cập nhật VerifyKey mới
+            existingProduct.VerifyKey = product.VerifyKey;
+
+            try
+            {
+                _context.SaveChanges();
+                return Ok();
+            }
+            catch
+            {
+                return BadRequest("Lỗi cập nhật");
+            }
         }
 
         [HttpPost]
