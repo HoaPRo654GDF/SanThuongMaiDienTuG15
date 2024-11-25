@@ -4,9 +4,10 @@
     Layout = "~/Areas/Baithi/Views/Shared/_BaithiLayout.cshtml";
 }
 
-<form id="deleteForm" method="post" style="display:none;">
+@* <form id="deleteForm" method="post" style="display:none;">
     @Html.AntiForgeryToken()
-</form>
+</form> *@
+
 <div class="layout">
     @if (Model == null)
         {
@@ -14,14 +15,16 @@
         }
         else
         {
-    <!-- Phần nút bên trái -->
+
     <div class="actions">
         <button id="btnAdd">Thêm</button>
         <button id="btnEdit">Sửa</button>
-        <button id="btnDelete" data-product-id="@Model.ProductId">Xóa</button>
+        @* <button id="btnDelete" data-product-id="@Model.ProductId">Xóa</button> *@
+        <button id="btnDelete" onclick="deleteProduct(@Model.ProductId)">Xóa</button>
+
     </div>
 
-    <!-- Phần thông tin sản phẩm bên phải -->
+  
     <div class="product-info">
         
             <h3>Thông tin sản phẩm</h3>
@@ -41,108 +44,35 @@
 </div>
 
 <style>
-    /* Reset CSS */
-    body {
-        font-family: Arial, sans-serif;
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-    }
-
-    /* Bố cục chính */
-    .layout {
-        display: flex;
-        width: 100vw; /* Chiều rộng toàn màn hình */
-        height: 100vh; /* Chiều cao toàn màn hình */
-    }
-
-    /* Cột bên trái - Các nút */
-    .actions {
-        width: 30%; /* Chiếm 30% chiều rộng */
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-        border-right: 2px solid #000; /* Viền phân cách */
-        padding: 20px;
-        background-color: #f8f8f8; /* Màu nền nhẹ cho cột nút */
-    }
-
-        .actions button {
-            width: 80%;
-            padding: 15px;
-            margin: 10px 0;
-            background-color: #f0f0f0;
-            border: 2px solid #000; /* Nút với viền rõ ràng */
-            font-size: 18px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-            .actions button:hover {
-                background-color: #d9f8c4; /* Đổi màu khi hover */
-            }
-
-    /* Cột bên phải - Thông tin sản phẩm */
-    .product-info {
-        width: 70%; /* Chiếm 70% chiều rộng */
-        padding: 20px;
-        text-align: center;
-    }
-
-        .product-info h3 {
-            font-size: 24px;
-            margin-bottom: 20px;
-        }
-
-        .product-info p {
-            font-size: 20px;
-            margin: 15px 0;
-        }
+  
+    
 </style>
 
-@* <script>
-document.getElementById('btnDelete').addEventListener('click', function () {
-    if (!confirm('Bạn có chắc chắn muốn xóa sản phẩm này?')) {
-        return;
-    }
-
-    const productId = this.getAttribute('data-product-id');
-    if (!productId) {
-        alert('Không tìm thấy ID sản phẩm!');
-        return;
-    }
-
-    fetch(`/Baithi/Home/DeleteProduct`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
-        },
-        body: JSON.stringify({ id: parseInt(productId) })
-    })
-    .then(response => {
-        if (!response.ok) {
-            throw new Error('Network response was not ok');
-        }
-        return response.json();
-    })
-    .then(data => {
-        if (data.success) {
-            alert('Sản phẩm đã được xóa thành công!');
-            window.location.href = '/Baithi/Home/Index';
-        } else {
-            alert('Xóa sản phẩm thất bại: ' + (data.message || 'Không có thông tin lỗi'));
-        }
-    })
-    .catch(error => {
-        console.error('Lỗi:', error);
-        alert('Đã xảy ra lỗi khi xóa sản phẩm.');
-    });
-});
-</script> *@
 
 <script>
+    function deleteProduct(id) {
+        if (!confirm("Xóa?")) {
+            return;
+        }
+        else {
+            fetch(`/Baithi/Home/Delete/${id}`,
+            {
+                method: 'DELETE',
+            })
+            .then(response => {
+                if (response.ok) {
+                    location.reload();
+                }
+                else {
+                    alert("Lỗi");
+                }
+            });
+        }
+    };
+
+
+
+@* 
     document.getElementById('btnDelete').addEventListener('click', function () {
         if (!confirm('Bạn có chắc chắn muốn xóa sản phẩm này?')) {
             return;
@@ -213,9 +143,9 @@ document.getElementById('btnDelete').addEventListener('click', function () {
                     }, 500);
 
                     // Sau 2 giây, tự động chuyển trang
-                   @*   setTimeout(() => {
+                     setTimeout(() => {
                          window.location.href = '/Baithi/Home/Index';
-                     }, 2000); *@
+                     }, 2000);
                 } else {
                     // Xóa loading và hiển thị lỗi
                     loadingDiv.remove();
@@ -228,5 +158,5 @@ document.getElementById('btnDelete').addEventListener('click', function () {
                 console.error('Lỗi:', error);
                 alert('Đã xảy ra lỗi khi xóa sản phẩm.');
             });
-    });
+    }); *@
 </script>

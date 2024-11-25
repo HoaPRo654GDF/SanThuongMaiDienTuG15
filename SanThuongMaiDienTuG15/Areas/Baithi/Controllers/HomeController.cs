@@ -19,55 +19,70 @@ namespace SanThuongMaiDienTuG15.Areas.Baithi.Controllers
 
         public IActionResult Index()
         {
-            var product = _context.Products.FirstOrDefault(p => p.ProductId == 26);
+            var product = _context.Products.FirstOrDefault(p => p.ProductId == 31);
             //if (product == null)
             //{
-            //    _logger.LogWarning("Product with ID 22 not found");
+            //    _logger.LogWarning("Product with ID  not found");
                
             //}
             return View(product);
         }
 
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public IActionResult DeleteProduct([FromBody] DeleteProductRequest request)
+        //[HttpPost]
+        //[ValidateAntiForgeryToken]
+        //public IActionResult DeleteProduct([FromBody] DeleteProductRequest request)
+        //{
+        //    _logger.LogInformation($"Received delete request for product ID: {request?.id}");
+
+        //    if (request?.id == null)
+        //    {
+        //        _logger.LogWarning("Delete request received with null ID");
+        //        return Json(new { success = false, message = "ID sản phẩm không hợp lệ." });
+        //    }
+
+        //    try
+        //    {
+        //        // Log the current product in database
+        //        var existingProduct = _context.Products.FirstOrDefault(p => p.ProductId == request.id);
+        //        if (existingProduct == null)
+        //        {
+        //            _logger.LogWarning($"Product with ID {request.id} not found in database");
+        //            return Json(new { success = false, message = "Sản phẩm không tồn tại." });
+        //        }
+
+        //        _logger.LogInformation($"Found product: {existingProduct.ProductName} with ID: {existingProduct.ProductId}");
+
+        //        _context.Products.Remove(existingProduct);
+        //        _context.SaveChanges();
+
+        //        _logger.LogInformation($"Successfully deleted product with ID: {request.id}");
+        //        return Json(new { success = true });
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        _logger.LogError($"Error deleting product {request.id}: {ex.Message}");
+        //        return Json(new { success = false, message = $"Lỗi khi xóa sản phẩm: {ex.Message}" });
+        //    }
+        //}
+
+        [HttpDelete]
+        public IActionResult Delete(int id)
         {
-            _logger.LogInformation($"Received delete request for product ID: {request?.id}");
-
-            if (request?.id == null)
+            var product = _context.Products.FirstOrDefault(x => x.ProductId == id);
+            if (product != null)
             {
-                _logger.LogWarning("Delete request received with null ID");
-                return Json(new { success = false, message = "ID sản phẩm không hợp lệ." });
-            }
-
-            try
-            {
-                // Log the current product in database
-                var existingProduct = _context.Products.FirstOrDefault(p => p.ProductId == request.id);
-                if (existingProduct == null)
-                {
-                    _logger.LogWarning($"Product with ID {request.id} not found in database");
-                    return Json(new { success = false, message = "Sản phẩm không tồn tại." });
-                }
-
-                _logger.LogInformation($"Found product: {existingProduct.ProductName} with ID: {existingProduct.ProductId}");
-
-                _context.Products.Remove(existingProduct);
+                _context.Products.Remove(product);
                 _context.SaveChanges();
-
-                _logger.LogInformation($"Successfully deleted product with ID: {request.id}");
-                return Json(new { success = true });
             }
-            catch (Exception ex)
-            {
-                _logger.LogError($"Error deleting product {request.id}: {ex.Message}");
-                return Json(new { success = false, message = $"Lỗi khi xóa sản phẩm: {ex.Message}" });
-            }
+            return View("Index");
         }
+
     }
 
-    public class DeleteProductRequest
-    {
-        public int id { get; set; }
-    }
+    //public class DeleteProductRequest
+    //{
+    //    public int id { get; set; }
+    //}
+
+
 }
