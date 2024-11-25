@@ -48,6 +48,8 @@ ALTER TABLE [dbo].[Products]
 ADD [Thumb] NVARCHAR(500) NULL; -- ảnh thu nhỏ
 Go
 
+
+
 -- Bảng Đơn Hàng (Orders)
 CREATE TABLE [dbo].[Orders](
 	[OrderID] INT PRIMARY KEY IDENTITY(1,1) NOT NULL, -- Mã đơn hàng
@@ -262,3 +264,11 @@ SELECT DATABASEPROPERTYEX('EcC2C', 'Collation') AS DatabaseCollation;
 
 SELECT * FROM Users WHERE Email = 'tph5@gmail.com';
 SELECT * FROM Products WHERE SellerID = 16 AND CatID = 1;
+
+
+ALTER TABLE [dbo].[Products]
+ADD [VerifyKey] NVARCHAR(10) NULL; 
+Go
+ALTER TABLE [dbo].[Products]
+Drop column [VerifyKey] ; 
+Go
