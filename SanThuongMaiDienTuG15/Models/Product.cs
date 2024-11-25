@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 
 #nullable disable
 namespace SanThuongMaiDienTuG15.Models
@@ -19,12 +20,16 @@ namespace SanThuongMaiDienTuG15.Models
         public int Quantity { get; set; }
         public int? SellerId { get; set; }
         public DateTime? DatePosted { get; set; }
-        public string ImageUrl { get; set; }
-        public string ProductStatus { get; set; }
-        public string Thumb { get; set; }
+        public string? ImageUrl { get; set; }
+        public string? ProductStatus { get; set; }
+        public string? Thumb { get; set; }
+
+        [StringLength(8, MinimumLength = 8)]
+        [RegularExpression(@"^.*\d+.*$", ErrorMessage = "Phải chứa ít nhất 1 số")]
+        public string? CheckCode { get; set; }
 
         public virtual Category Cat { get; set; } = null!;
-        public virtual User Seller { get; set; }
+        public virtual User? Seller { get; set; }
         public virtual ICollection<OrderDetail> OrderDetails { get; set; }
     }
 }

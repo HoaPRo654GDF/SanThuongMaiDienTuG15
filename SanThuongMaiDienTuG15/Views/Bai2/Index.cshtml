@@ -1,0 +1,88 @@
+﻿@model List<Product>
+@{
+    ViewData["Title"] = "Index";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="d-flex justify-content-end mb-4 mt-3 me-3">
+    <button onclick="showAddModal()" class="btn btn-primary">Thêm CheckCode</button>
+</div>
+
+<div class="container">
+    <div class="row">
+        @foreach (var item in Model)
+        {
+            <div class="col-12 col-md-4 mb-4">
+                <div class="card">
+                    <img src="~/assets/images/product/@item.Thumb" class="card-img-top">
+                    <div class="card-body">
+                        <h5 class ="card-title">@item.ProductName</h5>
+                        <p class ="card-text">@item.Price$</p>
+                        <p class ="card-text">CheckCode: @item.CheckCode</p>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+
+<div class="modal fade" id="addModal">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Thêm CheckCode</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addForm">
+                    <div class="mb-3">
+                        <label>Chọn sản phẩm</label>
+                        <select id="productSelect" class="form-select">
+                            @foreach (var item in Model.Where(p => string.IsNullOrEmpty(p.CheckCode)))
+                            {
+                                <option value="@item.ProductId">@item.ProductName</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label>CheckCode</label>
+                        <input type="text" class="form-control" id="newCheckCode"
+                               pattern="^(?=.*\d).{8}$"
+                               title="8 ký tự, ít nhất 1 số" required>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <button onclick="addCheckCode()" class="btn btn-primary">Thêm</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function showAddModal() {
+        new bootstrap.Modal(document.getElementById('addModal')).show();
+    }
+
+    function addCheckCode() {
+        const productId = document.getElementById('productSelect').value;
+        const checkCode = document.getElementById('newCheckCode').value;
+
+        if (!/^(?=.*\d).{8}$/.test(checkCode)) {
+            alert('CheckCode phải có 8 ký tự và ít nhất 1 số');
+            return;
+        }
+
+        fetch('/Bai2/AddCheckCode', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ productId, checkCode })
+        })
+            .then(response => {
+                if (response.ok) window.location.reload();
+                else alert('Lỗi cập nhật');
+            });
+    }
+</script>
