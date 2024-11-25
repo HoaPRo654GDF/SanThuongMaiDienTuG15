@@ -1,162 +1,407 @@
 ﻿@model SanThuongMaiDienTuG15.Models.Product
 @{
-    ViewData["Title"] = "Index";
+    ViewData["Title"] = "Thông tin sản phẩm";
     Layout = "~/Areas/Baithi/Views/Shared/_BaithiLayout.cshtml";
+    var user = Context.User;
+    var isSeller = user.IsInRole("2");
 }
 
-@* <form id="deleteForm" method="post" style="display:none;">
-    @Html.AntiForgeryToken()
-</form> *@
 
 <div class="layout">
-    @if (Model == null)
-        {
-            <p>Không có sản phẩm!</p>
-        }
-        else
-        {
-
-    <div class="actions">
-        <button id="btnAdd">Thêm</button>
-        <button id="btnEdit">Sửa</button>
-        @* <button id="btnDelete" data-product-id="@Model.ProductId">Xóa</button> *@
-        <button id="btnDelete" onclick="deleteProduct(@Model.ProductId)">Xóa</button>
-
+    @if (Model != null)
+    {
+         @if (User.Identity.IsAuthenticated && isSeller)
+         {
+             <div class="actions">
+                 <button id="btnAdd" onclick="showAddForm()">Thêm</button>
+                 <button id="btnEdit" onclick="showEditForm(@Model.ProductId)">Sửa</button>
+                 <button id="btnDelete" onclick="deleteProduct(@Model.ProductId)">Xóa</button>
+             </div>
+         }
+    <div class="product-info" id="product-@Model.ProductId">
+        <h3>Thông tin sản phẩm</h3>
+        <p><strong>ID:</strong> <span id="productId">@Model.ProductId</span></p>
+        <p><strong>Tên sản phẩm:</strong> <span id="productName">@Model.ProductName</span></p>
+        <p><strong>Giá:</strong> <span id="productPrice">@Model.Price</span> $</p>
+        <p><strong>Mô tả:</strong> <span id="productDesc">@Model.Description</span></p>
+        <p><strong>Ngày bán:</strong> <span id="productDate">@Model.DatePosted</span></p>
+        <p><strong>Danh mục:</strong> <span id="productCat">@Model.CatId</span></p>
+        <p><strong>Số lượng:</strong> <span id="productQty">@Model.Quantity</span></p>
+        <p><strong>Trạng thái:</strong> <span id="productStatus">@Model.ProductStatus</span></p>
+        <p><strong>Link ảnh:</strong> <span id="productImage">@Model.ImageUrl</span></p>
+        <img class="img-full" src="~/assets/images/product/@Model.Thumb" alt="Product Images">
     </div>
-
-  
-    <div class="product-info">
         
-            <h3>Thông tin sản phẩm</h3>
-            <p><strong>ID:</strong> <span id="productId">@Model.ProductId</span></p>
-            <p><strong>Tên sản phẩm:</strong> @Model.ProductName</p>
-            <p><strong>Giá:</strong> @Model.Price $</p>
-            <p><strong>Mô tả:</strong> @Model.Description</p>
-            <p><strong>Ngày bán:</strong> @Model.DatePosted</p>
-            <p><strong>Danh mục:</strong> @Model.CatId</p>
-            <p><strong>Số lượng:</strong> @Model.Quantity</p>
-            <p><strong>Trạng thái:</strong> @Model.ProductStatus</p>
-            <p><strong>Link ảnh:</strong> @Model.ImageUrl</p>
-            <img class="img-full" src="~/assets/images/product/@Model.Thumb" alt="Product Images">
+    }
+    else
+    {
+        <p>Không có sản phẩm!</p>
         
-    </div>
-        }
+    }
 </div>
 
-<style>
-  
-    
-</style>
+@* Form sửa *@
+<div id="editFormPopup" class="popup-overlay">
+    <div class="popup-content">
+        <h2>Sửa Sản Phẩm</h2>
+        <form id="editForm" enctype="multipart/form-data">
+            <div class="form-group">
+                <label for="editName">Tên sản phẩm:</label>
+                <input type="text" id="editName" name="productName" required>
+            </div>
+            <div class="form-group">
+                <label for="editPrice">Giá:</label>
+                <input type="number" id="editPrice" name="price" required>
+            </div>
+            <div class="form-group">
+                <label for="editDesc">Mô tả:</label>
+                <textarea id="editDesc" name="description" required></textarea>
+            </div>
+            <div class="form-group">
+                <label for="editDate">Ngày bán:</label>
+                <input type="datetime-local" id="editDate" name="datePosted" required>
+            </div>
+            <div class="form-group">
+                <label for="editCat">Danh mục:</label>
+                <select id="editCat" name="catId" required>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="editQty">Số lượng:</label>
+                <input type="number" id="editQty" name="quantity" required>
+            </div>
+            <div class="form-group">
+                <label for="editStatus">Trạng thái:</label>
+                <input type="text" id="editStatus" name="productStatus" readonly>
+            </div>
+            <div class="form-group">
+                <label for="editImageUrl">Link ảnh:</label>
+                <input type="text" id="editImageUrl" name="imageUrl">
+            </div>
+            <div class="form-group">
+                <label for="editThumb">Ảnh sản phẩm:</label>
+                <input type="file" id="editThumb" name="thumbFile" accept="image/*">
+                <img id="currentThumb" src="" alt="Current thumbnail" style="max-width: 100px; margin-top: 10px;">
+            </div>
+            <div class="form-buttons">
+                <button type="submit">Lưu</button>
+                <button type="button" onclick="closeEditForm()">Hủy</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@* Form thêm *@
+<div id="addFormPopup" class="popup-overlay">
+    <div class="popup-content">
+        <h2>Thêm Sản Phẩm Mới</h2>
+        <form id="addForm" enctype="multipart/form-data">
+            <div class="form-group">
+                <label for="addName">Tên sản phẩm:</label>
+                <input type="text" id="addName" name="productName" required>
+            </div>
+            <div class="form-group">
+                <label for="addPrice">Giá:</label>
+                <input type="number" id="addPrice" name="price" required>
+            </div>
+            <div class="form-group">
+                <label for="addDesc">Mô tả:</label>
+                <textarea id="addDesc" name="description" required></textarea>
+            </div>
+            <div class="form-group">
+                <label for="addDate">Ngày bán:</label>
+                <input type="datetime-local" id="addDate" name="datePosted" required>
+            </div>
+            <div class="form-group">
+                <label for="addCat">Danh mục:</label>
+                <select id="addCat" name="catId" required>
+                    <!-- Filled dynamically -->
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="addQty">Số lượng:</label>
+                <input type="number" id="addQty" name="quantity" required min="0">
+            </div>
+            <div class="form-group">
+                <label for="addStatus">Trạng thái:</label>
+                <input type="text" id="addStatus" name="productStatus" readonly>
+            </div>
+            <div class="form-group">
+                <label for="addImageUrl">Link ảnh:</label>
+                <input type="text" id="addImageUrl" name="imageUrl">
+            </div>
+            <div class="form-group">
+                <label for="addThumb">Ảnh sản phẩm:</label>
+                <input type="file" id="addThumb" name="thumbFile" accept="image/*" required>
+                <img id="previewThumb" src="" alt="Preview thumbnail" style="max-width: 100px; margin-top: 10px; display: none;">
+            </div>
+            <div class="form-buttons">
+                <button type="submit">Thêm</button>
+                <button type="button" onclick="closeAddForm()">Hủy</button>
+            </div>
+        </form>
+    </div>
+</div>
 
 
 <script>
-    function deleteProduct(id) {
-        if (!confirm("Xóa?")) {
-            return;
-        }
-        else {
-            fetch(`/Baithi/Home/Delete/${id}`,
-            {
-                method: 'DELETE',
-            })
-            .then(response => {
-                if (response.ok) {
-                    location.reload();
-                }
-                else {
-                    alert("Lỗi");
-                }
-            });
-        }
-    };
+// xử lý sửa
+    let categories = [];
+    fetch('/Baithi/Home/GetCategories')
+        .then(response => response.json())
+        .then(data => {
+            categories = data;
+        });
 
+    function showEditForm(id) {
+        const popup = document.getElementById('editFormPopup');
+        const form = document.getElementById('editForm');
+        const editStatus = document.getElementById('editStatus');
+        const editQty = document.getElementById('editQty');
+        const currentThumb = document.getElementById('currentThumb');
+        
+        // Fill categories dropdown
+        const categorySelect = document.getElementById('editCat');
+        categorySelect.innerHTML = categories.map(cat => 
+            `<option value="${cat.catId}">${cat.catName}</option>`
+        ).join('');
+        
+        // Lấy thông tin hiện tại của sản phẩm
+        document.getElementById('editName').value = document.getElementById('productName').textContent;
+        document.getElementById('editPrice').value = document.getElementById('productPrice').textContent;
+        document.getElementById('editDesc').value = document.getElementById('productDesc').textContent;
+        document.getElementById('editDate').value = new Date(document.getElementById('productDate').textContent).toISOString().slice(0, 16);
+        document.getElementById('editCat').value = document.getElementById('productCat').textContent;
+        editQty.value = document.getElementById('productQty').textContent;
+        editStatus.value = document.getElementById('productStatus').textContent;
+        document.getElementById('editImageUrl').value = document.getElementById('productImage').textContent;
+        
+        // Hiển thị ảnh hiện tại
+        const thumbPath = document.querySelector('.img-full').src;
+        currentThumb.src = thumbPath;
+        
+        // Auto update status based on quantity
+        editQty.addEventListener('change', function() {
+            editStatus.value = this.value > 0 ? "Còn hàng" : "Hết hàng";
+        });
+        
+        // Hiển thị popup
+        popup.style.display = 'flex';
+        
+        // Xử lý sự kiện submit form
+        form.onsubmit = function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(form);
+            updateProduct(id, formData);
+        };
+    }
 
-
-@* 
-    document.getElementById('btnDelete').addEventListener('click', function () {
-        if (!confirm('Bạn có chắc chắn muốn xóa sản phẩm này?')) {
-            return;
-        }
-
-        const productId = this.getAttribute('data-product-id');
-        if (!productId) {
-            alert('Không tìm thấy ID sản phẩm!');
-            return;
-        }
-
-        // Hiển thị loading
-        const productInfo = document.querySelector('.product-info');
-        const loadingDiv = document.createElement('div');
-        loadingDiv.style.cssText = 'text-align: center; padding: 20px; color: #666;';
-        loadingDiv.innerHTML = 'Đang xóa sản phẩm...';
-        productInfo.appendChild(loadingDiv);
-
-        fetch(`/Baithi/Home/DeleteProduct`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
-            },
-            body: JSON.stringify({ id: parseInt(productId) })
+    function updateProduct(id, formData) {
+        fetch(`/Baithi/Home/Edit/${id}`, {
+            method: 'PUT',
+            body: formData
         })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Network response was not ok');
+        .then(response => {
+            if (response.ok) {
+                // Cập nhật UI
+                document.getElementById('productName').textContent = formData.get('productName');
+                document.getElementById('productPrice').textContent = formData.get('price');
+                document.getElementById('productDesc').textContent = formData.get('description');
+                document.getElementById('productDate').textContent = new Date(formData.get('datePosted')).toLocaleString();
+                document.getElementById('productCat').textContent = formData.get('catId');
+                document.getElementById('productQty').textContent = formData.get('quantity');
+                document.getElementById('productStatus').textContent = formData.get('productStatus');
+                document.getElementById('productImage').textContent = formData.get('imageUrl');
+
+                // Cập nhật ảnh nếu có thay đổi
+                const thumbFile = formData.get('thumbFile');
+                if (thumbFile.size > 0) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        document.querySelector('.img-full').src = e.target.result;
+                    };
+                    reader.readAsDataURL(thumbFile);
                 }
-                return response.json();
-            })
+                
+                // Đóng form
+                closeEditForm();
+                
+                // Thông báo thành công
+                alert('Cập nhật sản phẩm thành công!');
+            } else {
+                alert('Có lỗi xảy ra khi cập nhật sản phẩm!');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Có lỗi xảy ra khi cập nhật sản phẩm!');
+        });
+    }
+
+    function closeEditForm() {
+        document.getElementById('editFormPopup').style.display = 'none';
+    }
+
+    // Thêm
+    document.addEventListener('DOMContentLoaded', function() {
+        // Load categories for both edit and add forms
+        fetch('/Baithi/Home/GetCategories')
+            .then(response => response.json())
             .then(data => {
-                if (data.success) {
-                    // Xóa loading
-                    loadingDiv.remove();
-
-                    // Tạo và hiển thị thông báo thành công
-                    const successDiv = document.createElement('div');
-                    successDiv.style.cssText = `
-                    padding: 15px;
-                    margin: 20px 0;
-                    background-color: #d4edda;
-                    color: #155724;
-                    border: 1px solid #c3e6cb;
-                    border-radius: 4px;
-                    text-align: center;
-                    opacity: 0;
-                    transition: opacity 0.5s ease-in-out;
-                `;
-                    successDiv.innerHTML = 'Sản phẩm đã được xóa thành công!';
-
-                    // Thêm animation fade out cho nội dung sản phẩm
-                    const contentDiv = productInfo.querySelector('p, img');
-                    if (contentDiv) {
-                        contentDiv.style.transition = 'opacity 0.5s ease-in-out';
-                        contentDiv.style.opacity = '0';
-                    }
-
-                    // Sau khi fade out hoàn tất, ẩn nội dung và hiện thông báo
-                    setTimeout(() => {
-                        productInfo.innerHTML = '';
-                        productInfo.appendChild(successDiv);
-                        // Hiện thông báo với animation
-                        setTimeout(() => {
-                            successDiv.style.opacity = '1';
-                        }, 50);
-                    }, 500);
-
-                    // Sau 2 giây, tự động chuyển trang
-                     setTimeout(() => {
-                         window.location.href = '/Baithi/Home/Index';
-                     }, 2000);
-                } else {
-                    // Xóa loading và hiển thị lỗi
-                    loadingDiv.remove();
-                    alert('Xóa sản phẩm thất bại: ' + (data.message || 'Không có thông tin lỗi'));
+                categories = data;
+                
+                // Fill categories in add form
+                const addCategorySelect = document.getElementById('addCat');
+                if (addCategorySelect) {
+                    addCategorySelect.innerHTML = categories.map(cat => 
+                        `<option value="${cat.catId}">${cat.catName}</option>`
+                    ).join('');
                 }
-            })
-            .catch(error => {
-                // Xóa loading và hiển thị lỗi
-                loadingDiv.remove();
-                console.error('Lỗi:', error);
-                alert('Đã xảy ra lỗi khi xóa sản phẩm.');
             });
-    }); *@
+            
+        // Set current date and time as default for new product
+        const addDate = document.getElementById('addDate');
+        if (addDate) {
+            const now = new Date();
+            now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+            addDate.value = now.toISOString().slice(0, 16);
+        }
+    });
+
+    function showAddForm() {
+        const popup = document.getElementById('addFormPopup');
+        const form = document.getElementById('addForm');
+        const addStatus = document.getElementById('addStatus');
+        const addQty = document.getElementById('addQty');
+        const previewThumb = document.getElementById('previewThumb');
+        
+        form.reset();
+        previewThumb.style.display = 'none';
+        addStatus.value = "Hết hàng";
+        
+        const now = new Date();
+        now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+        document.getElementById('addDate').value = now.toISOString().slice(0, 16);
+        
+      
+        addQty.addEventListener('change', function() {
+            addStatus.value = this.value > 0 ? "Còn hàng" : "Hết hàng";
+        });
+        
+        document.getElementById('addThumb').addEventListener('change', function(e) {
+            if (this.files && this.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    previewThumb.src = e.target.result;
+                    previewThumb.style.display = 'block';
+                };
+                reader.readAsDataURL(this.files[0]);
+            }
+        });
+        
+        // Hiển thị popup
+        popup.style.display = 'flex';
+        
+        // Xử lý sự kiện submit form
+        form.onsubmit = function(e) {
+            e.preventDefault();
+            const formData = new FormData(form);
+            addProduct(formData);
+        };
+    }
+
+    function addProduct(formData) {
+        fetch('/Baithi/Home/Add', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => {
+            if (response.ok) {
+                return response.json();
+            }
+            throw new Error('Network response was not ok');
+        })
+        .then(newProduct => {
+            // Thêm sản phẩm mới vào UI
+            const layout = document.querySelector('.layout');
+            const productHtml = `
+                <div class="product-info" id="product-${newProduct.productId}">
+                    <h3>Thông tin sản phẩm</h3>
+                    <p><strong>ID:</strong> <span id="productId">${newProduct.productId}</span></p>
+                    <p><strong>Tên sản phẩm:</strong> <span id="productName">${newProduct.productName}</span></p>
+                    <p><strong>Giá:</strong> <span id="productPrice">${newProduct.price}</span> $</p>
+                    <p><strong>Mô tả:</strong> <span id="productDesc">${newProduct.description}</span></p>
+                    <p><strong>Ngày bán:</strong> <span id="productDate">${new Date(newProduct.datePosted).toLocaleString()}</span></p>
+                    <p><strong>Danh mục:</strong> <span id="productCat">${newProduct.catId}</span></p>
+                    <p><strong>Số lượng:</strong> <span id="productQty">${newProduct.quantity}</span></p>
+                    <p><strong>Trạng thái:</strong> <span id="productStatus">${newProduct.productStatus}</span></p>
+                    <p><strong>Link ảnh:</strong> <span id="productImage">${newProduct.imageUrl}</span></p>
+                    <img class="img-full" src="/assets/images/product/${newProduct.thumb}" alt="Product Images">
+                </div>
+            `;
+            
+            // Thêm sản phẩm vào đầu danh sách
+            const noProductMessage = layout.querySelector('p');
+            if (noProductMessage && noProductMessage.textContent === 'Không có sản phẩm!') {
+                noProductMessage.remove();
+            }
+            
+            layout.insertAdjacentHTML('afterbegin', productHtml);
+            
+            // Đóng form và thông báo
+            closeAddForm();
+            alert('Thêm sản phẩm thành công!');
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Có lỗi xảy ra khi thêm sản phẩm!');
+        });
+    }
+
+    function closeAddForm() {
+        document.getElementById('addFormPopup').style.display = 'none';
+    }
+
+    // Xóa (FetchAPI)
+    function deleteProduct(id) {
+        if (!confirm("Bạn có chắc chắn muốn xóa sản phẩm này?")) {
+            return;
+        }
+
+        fetch(`/Baithi/Home/Delete/${id}`, {
+            method: 'DELETE'
+        })
+        .then(response => {
+            if (response.ok) {
+                const productElement = document.getElementById(`product-${id}`);
+                const actionsElement = document.querySelector('.actions');
+
+                if (productElement) {
+                    // Thêm hiệu ứng fade out
+                    productElement.style.opacity = '0';
+                    productElement.style.transition = 'opacity 0.5s ease';
+
+                    setTimeout(() => {
+                        if (actionsElement) {
+                            actionsElement.remove();
+                        }
+                        productElement.remove();
+
+                        // Hiển thị thông báo "Không có sản phẩm!"
+                        const layout = document.querySelector('.layout');
+                        const noProductMessage = document.createElement('p');
+                        noProductMessage.textContent = 'Không có sản phẩm!';
+                        layout.appendChild(noProductMessage);
+                    }, 500);
+                }
+            } else {
+                alert("Có lỗi xảy ra khi xóa sản phẩm!");
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert("Có lỗi xảy ra khi xóa sản phẩm!");
+        });
+    }
 </script>
