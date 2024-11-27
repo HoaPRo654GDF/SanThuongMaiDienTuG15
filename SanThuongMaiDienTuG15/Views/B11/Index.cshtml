@@ -1,0 +1,217 @@
+﻿@model List<Product>
+
+@{
+    ViewData["Title"] = "Index";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+@if (!User.Identity.IsAuthenticated || !User.IsInRole("2"))
+{
+    <div class="alert alert-danger">
+        Bạn không có quyền truy cập trang này. Vui lòng đăng nhập với tài khoản người bán.
+    </div>
+    return;
+}
+
+<div class="d-flex justify-content-end mb-4 mt-3 me-3">
+    <button onclick="showCreateModal()" class="btn btn-primary">Thêm</button>
+</div>
+
+<div class="container">
+    <div class="row">
+        @foreach (var item in Model)
+        {
+            <div class="col-12 col-md-4 mb-4">
+                <div class="card">
+                    <img src="~/assets/images/product/@item.Thumb" class="card-img-top" alt="@item.ProductName">
+                    <div class="card-body">
+                        <h5 class="card-title">@item.ProductName</h5>
+                        <p class="card-text">@item.Description</p>
+                        <p class="card-text">Price: $@item.Price</p>
+                        <p class="card-text">Verify Key: @item.VerifyKey</p>
+                        <div class="btn-group">
+                            <button onclick="editProduct(@item.ProductId)" class="btn btn-warning">Sửa</button>
+                            <button class="btn btn-danger" onclick="deleteProduct(@item.ProductId)">Xóa</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+<!-- form modal sửa -->
+<div class="modal fade" id="editModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Sửa Verify Key</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editForm">
+                    <input type="hidden" id="productId" />
+                    @* <div class="mb-3">
+                    <label for="productName" class="form-label">Tên sản phẩm</label>
+                    <input type="text" class="form-control" id="productName" required>
+                    </div>
+                    <div class="mb-3">
+                    <label for="description" class="form-label">Mô tả</label>
+                    <textarea class="form-control" id="description"></textarea>
+                    </div> *@
+                    <div class="mb-3">
+                        <label for="verifyKey" class="form-label">Verify Key</label>
+                        <input type="text" class="form-control" id="verifyKey" pattern="^\d.{9}$" title="Phải có 10 ký tự và bắt đầu bằng số" required>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <button type="button" class="btn btn-primary" onclick="saveProduct()">Lưu</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Form modal thêm mới -->
+<div class="modal fade" id="createModal">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Thêm VerifyKey</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="createForm">
+                    <div class="mb-3">
+                        <label>Chọn sản phẩm</label>
+                        <select id="productSelect" class="form-select">
+                            @foreach (var item in Model.Where(p => string.IsNullOrEmpty(p.VerifyKey)))
+                            {
+                                <option value="@item.ProductId">@item.ProductName - @item.Price$</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label>VerifyKey</label>
+                        <input type="text" class="form-control" id="newVerifyKey"
+                               pattern="^\d.{9}$" title="10 ký tự, bắt đầu bằng số" required>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <button onclick="createProduct()" class="btn btn-primary">Thêm</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Hàm xóa sản phẩm
+    function deleteProduct(id) {
+        if (confirm('Xóa?')) {
+            fetch(`/Bai1/Delete/${id}`, {
+                method: 'DELETE'
+            })
+                .then(response => {
+                    if (response.ok) {
+                        window.location.reload();
+                    } else {
+                        alert('Lỗi xóa');
+                    }
+                });
+        }
+    }
+
+    // Hàm hiển thị modal edit
+    function editProduct(id) {
+        fetch(`/Bai1/GetProduct/${id}`)
+            .then(response => response.json())  // đổi về json vì server trả về JsonResult
+            .then(data => {
+                // Điền thông tin vào form
+                document.getElementById('productId').value = data.productId;
+                document.getElementById('verifyKey').value = data.verifyKey || '';
+
+                // Hiển thị modal
+                new bootstrap.Modal(document.getElementById('editModal')).show();
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Lỗi khi lấy thông tin sản phẩm');
+            });
+    }
+
+    // Hàm lưu thông tin chỉnh sửa
+    function saveProduct() {
+        const productId = document.getElementById('productId').value;
+        const verifyKey = document.getElementById('verifyKey').value;
+
+        if (!/^\d.{9}$/.test(verifyKey)) {
+            alert('VerifyKey phải có đúng 10 ký tự và bắt đầu bằng số');
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('ProductId', productId);  // Viết hoa key
+        formData.append('VerifyKey', verifyKey); // Viết hoa key
+
+        fetch('/Bai1/Edit', {
+            method: 'POST',
+            body: formData
+        })
+            .then(async response => {
+                if (response.ok) {
+                    window.location.reload();
+                } else {
+                    const errorText = await response.text();
+                    alert(errorText || 'Lỗi cập nhật');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Lỗi khi cập nhật');
+            });
+    }
+
+    // Thêm VerifyKey
+    function showCreateModal() {
+        new bootstrap.Modal(document.getElementById('createModal')).show();
+    }
+
+    function createProduct() {
+        const formData = new FormData();
+        const productId = document.getElementById('productSelect').value;
+        const verifyKey = document.getElementById('newVerifyKey').value;
+
+        if (!productId) {
+            alert('Vui lòng chọn sản phẩm');
+            return;
+        }
+
+        if (!/^\d.{9}$/.test(verifyKey)) {
+            alert('VerifyKey phải có đúng 10 ký tự và bắt đầu bằng số');
+            return;
+        }
+
+        formData.append('ProductId', productId);  // Viết hoa key theo model
+        formData.append('VerifyKey', verifyKey); // Viết hoa key theo model
+
+        fetch('/Bai1/Create', {
+            method: 'POST',
+            body: formData
+        })
+            .then(async response => {
+                if (response.ok) {
+                    window.location.reload();
+                } else {
+                    const errorText = await response.text();
+                    alert(errorText || 'Lỗi thêm mới');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Lỗi khi thêm mới');
+            });
+    }
+</script>

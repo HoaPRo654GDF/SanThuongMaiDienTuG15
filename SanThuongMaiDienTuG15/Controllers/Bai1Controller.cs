@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using SanThuongMaiDienTuG15.Models;
 
 namespace SanThuongMaiDienTuG15.Controllers
@@ -12,41 +14,55 @@ namespace SanThuongMaiDienTuG15.Controllers
         {
             _context = context;
         }
+
+        //[Authorize(Roles = "2")]
         public IActionResult Index()
         {
-            var products = _context.Products.ToList();
+            if (!User.Identity.IsAuthenticated)
+            {
+                return RedirectToAction("Login", "Accounts");
+            }
+
+            // Kiểm tra role
+            if (!User.IsInRole("2"))
+            {
+                return RedirectToAction("Index", "Home");  
+            }
+            var sellerId = User.FindFirst("UserID")?.Value;
+            if (!int.TryParse(sellerId, out int userId))
+            {
+                return Unauthorized();
+            }
+
+            var products = _context.Products.Where(p => p.SellerId == userId).ToList();
+            ViewBag.Categories = _context.Categories.ToList();
+            //var products = _context.Products.ToList();
             return View(products);
         }
         [HttpGet]
         public JsonResult GetProduct(int id)
         {
-            var product = _context.Products.Find(id);
+
+            var sellerId = int.Parse(User.FindFirst("UserID").Value);
+            var product = _context.Products.FirstOrDefault(p => p.ProductId == id && p.SellerId == sellerId);
+
+            //var product = _context.Products.Find(id);
             return Json(product);
         }
 
+        [Authorize(Roles = "2")]
         [HttpPost]
         public IActionResult Create([FromBody] Product product)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
 
-            var existingProduct = _context.Products.Find(product.ProductId);
+            var sellerId = int.Parse(User.FindFirst("UserID").Value);
+            var existingProduct = _context.Products.FirstOrDefault(
+                p => p.ProductId == product.ProductId && p.SellerId == sellerId);
+
             if (existingProduct == null) return NotFound();
 
-            // Giữ lại các trường c
-            existingProduct.ProductName = existingProduct.ProductName;
-            existingProduct.Description = existingProduct.Description;
-            existingProduct.CatId = existingProduct.CatId;
-            existingProduct.Price = existingProduct.Price;
-            existingProduct.Quantity = existingProduct.Quantity;
-            existingProduct.SellerId = existingProduct.SellerId;
-            existingProduct.DatePosted = existingProduct.DatePosted;
-            existingProduct.ImageUrl = existingProduct.ImageUrl;
-            existingProduct.ProductStatus = existingProduct.ProductStatus;
-            existingProduct.Thumb = existingProduct.Thumb;
-
-            // Cập nhật VerifyKey mới
             existingProduct.VerifyKey = product.VerifyKey;
-
             try
             {
                 _context.SaveChanges();
@@ -58,19 +74,20 @@ namespace SanThuongMaiDienTuG15.Controllers
             }
         }
 
+        [Authorize(Roles = "2")]
         [HttpPost]
         public IActionResult Edit([FromBody] Product updatedProduct)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            var existingProduct = _context.Products.Find(updatedProduct.ProductId);
+            var sellerId = int.Parse(User.FindFirst("UserID").Value);
+            var existingProduct = _context.Products.FirstOrDefault(
+                p => p.ProductId == updatedProduct.ProductId && p.SellerId == sellerId);
+
             if (existingProduct == null) return NotFound();
 
-            //existingProduct.ProductName = updatedProduct.ProductName;
-            //existingProduct.Description = updatedProduct.Description;
             existingProduct.VerifyKey = updatedProduct.VerifyKey;
-
             try
             {
                 _context.SaveChanges();
@@ -82,11 +99,14 @@ namespace SanThuongMaiDienTuG15.Controllers
             }
         }
 
-
+        [Authorize(Roles = "2")]
         [HttpDelete]
         public async Task<IActionResult> Delete(int id)
         {
-            var product = await _context.Products.FindAsync(id);
+            var sellerId = int.Parse(User.FindFirst("UserID").Value);
+            var product = await _context.Products.FirstOrDefaultAsync(
+                p => p.ProductId == id && p.SellerId == sellerId);
+
             if (product == null)
             {
                 return NotFound();
@@ -96,5 +116,42 @@ namespace SanThuongMaiDienTuG15.Controllers
             await _context.SaveChangesAsync();
             return Ok();
         }
+
+        [Authorize(Roles = "2")]
+        [HttpPost]
+        public async Task<IActionResult> AddNew([FromForm] Product newProduct, IFormFile thumbFile)
+        {
+            try
+            {
+                if (thumbFile == null)
+                    return BadRequest("Vui lòng chọn ảnh sản phẩm");
+
+                var sellerId = int.Parse(User.FindFirst("UserID").Value);
+                newProduct.SellerId = sellerId;
+                newProduct.DatePosted = DateTime.Now;
+                newProduct.ProductStatus = newProduct.Quantity > 0 ? "Còn hàng" : "Hết hàng";
+
+                // Xử lý upload ảnh
+                string uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/assets/images/product");
+                string uniqueFileName = Guid.NewGuid().ToString() + "_" + thumbFile.FileName;
+                string filePath = Path.Combine(uploadsFolder, uniqueFileName);
+
+                using (var stream = new FileStream(filePath, FileMode.Create))
+                {
+                    await thumbFile.CopyToAsync(stream);
+                }
+
+                newProduct.Thumb = uniqueFileName;
+
+                _context.Products.Add(newProduct);
+                await _context.SaveChangesAsync();
+                return Ok(newProduct);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest($"Lỗi: {ex.Message}");
+            }
+        }
     }
+
 }
