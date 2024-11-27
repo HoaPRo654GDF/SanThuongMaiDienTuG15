@@ -27,7 +27,7 @@
 </div>
 
 
-<div class="modal fade" id="addModal">
+@* <div class="modal fade" id="addModal">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
@@ -83,6 +83,126 @@
             .then(response => {
                 if (response.ok) window.location.reload();
                 else alert('Lỗi cập nhật');
+            });
+    }
+</script> *@
+
+// View
+<div class="modal fade" id="addModal">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Thêm Sản Phẩm Mới</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addForm">
+                    <div class="mb-3">
+                        <label>Tên sản phẩm</label>
+                        <input type="text" class="form-control" name="ProductName" required>
+                    </div>
+                    <div class="mb-3">
+                        <label>Mô tả</label>
+                        <textarea class="form-control" name="Description" required></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label>Danh mục</label>
+                        <select name="CatId" class="form-select" required>
+                            @foreach (var cat in ViewBag.Categories)
+                            {
+                                <option value="@cat.CatId">@cat.CatName</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label>Giá</label>
+                        <input type="number" class="form-control" name="Price" required min="0">
+                    </div>
+                    <div class="mb-3">
+                        <label>Số lượng</label>
+                        <input type="number" class="form-control" name="Quantity" required min="0"
+                               onchange="updateStatus(this.value)">
+                    </div>
+                    <div class="mb-3">
+                        <label>Người bán</label>
+                        <select name="SellerId" class="form-select" required>
+                            @foreach (var seller in ViewBag.Sellers)
+                            {
+                                <option value="@seller.UserId">@seller.Username</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label>Link ảnh</label>
+                        <input type="text" class="form-control" name="ImageUrl">
+                    </div>
+                    <div class="mb-3">
+                        <label>Ảnh sản phẩm</label>
+                        <input type="file" class="form-control" name="thumbFile" accept="image/*" required>
+                        <img id="thumbPreview" src="#" class="mt-2" style="max-width: 200px; display: none;">
+                    </div>
+                    <div class="mb-3">
+                        <label>CheckCode</label>
+                        <input type="text" class="form-control" name="CheckCode"
+                               pattern="^(?=.*\d).{8}$"
+                               title="8 ký tự, ít nhất 1 số" required>
+                    </div>
+                    <input type="hidden" name="ProductStatus" id="productStatus" value="Hết hàng">
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <button onclick="addProduct()" class="btn btn-primary">Thêm</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function showAddModal() {
+        new bootstrap.Modal(document.getElementById('addModal')).show();
+    }
+
+    function updateStatus(quantity) {
+        document.getElementById('productStatus').value = quantity > 0 ? "Còn hàng" : "Hết hàng";
+    }
+    document.querySelector('input[name="thumbFile"]').addEventListener('change', function (e) {
+        const preview = document.getElementById('thumbPreview');
+        const file = e.target.files[0];
+
+        if (file) {
+            preview.style.display = 'block';
+            preview.src = URL.createObjectURL(file);
+        } else {
+            preview.style.display = 'none';
+        }
+    });
+
+
+    function addProduct() {
+        const form = document.getElementById('addForm');
+        const formData = new FormData(form);
+
+        if (!form.checkValidity()) {
+            form.reportValidity();
+            return;
+        }
+
+        fetch('/Bai2/Add', {
+            method: 'POST',
+            body: formData
+        })
+            .then(async response => {
+                if (response.ok) {
+                    window.location.reload();
+                } else {
+                    const errorText = await response.text();
+                    alert(errorText);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Có lỗi xảy ra khi thêm sản phẩm');
             });
     }
 </script>
