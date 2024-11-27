@@ -171,17 +171,23 @@
     // Hàm xóa sản phẩm
     function deleteProduct(id) {
         if (confirm('Xóa?')) {
-            // Gọi API xóa với method DELETE
+            const formData = new FormData();
+            formData.append('id', id);
+
             fetch(`/Bai1/Delete/${id}`, {
                 method: 'DELETE',
-                headers: {
-                    'Content-Type': 'application/json'
-                }
+                body: formData
             })
                 .then(response => {
                     if (response.ok) {
-                        // Reload trang nếu xóa thành công
-                        window.location.reload();
+                        const product = document.getElementById(`product-${id}`);
+                        if (product) {
+                            product.style.opacity = '0';
+                            product.style.transition = 'opacity 0.5s ease';
+                            setTimeout(() => {
+                                product.remove();
+                            }, 500);
+                        }
                     } else {
                         alert('Lỗi xóa');
                     }
@@ -192,47 +198,47 @@
 // Sửa VerifyKey
     // Hàm hiển thị modal edit
     function editProduct(id) {
-        // Gọi API lấy thông tin sản phẩm
         fetch(`/Bai1/GetProduct/${id}`)
             .then(res => res.json())
             .then(data => {
-                // Điền thông tin vào form
                 document.getElementById('productId').value = data.productId;
-                // document.getElementById('productName').value = data.productName;
-                // document.getElementById('description').value = data.description;
                 document.getElementById('verifyKey').value = data.verifyKey;
-                // Hiển thị modal
                 new bootstrap.Modal(document.getElementById('editModal')).show();
             });
     }
 
     // Hàm lưu thông tin chỉnh sửa
     function saveProduct() {
-        // Kiểm tra VerifyKey hợp lệ
         const verifyKey = document.getElementById('verifyKey').value;
+        const productId = document.getElementById('productId').value;
+
         if (!/^\d.{9}$/.test(verifyKey)) {
             alert('VerifyKey phải có đúng 10 ký tự và bắt đầu bằng số');
             return;
         }
-        // Tạo object data
-        const data = {
-            productId: document.getElementById('productId').value,
-            // productName: document.getElementById('productName').value,
-            // description: document.getElementById('description').value,
-            verifyKey: verifyKey
-        };
-        // Gọi API cập nhật
+
+        const formData = new FormData();
+        formData.append('ProductId', productId);
+        formData.append('VerifyKey', verifyKey);
+
         fetch('/Bai1/Edit', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(data)
+            body: formData
         })
             .then(response => {
-                if (!response.ok) return response.json();
-                window.location.reload();
-            })
-            .then(errors => {
-                if (errors) alert(errors.VerifyKey ? errors.VerifyKey[0] : 'Lỗi cập nhật');
+                if (response.ok) {
+                    const verifyKeyElement = document.querySelector(`#product-${productId} .card-text:nth-child(4)`);
+                    if (verifyKeyElement) {
+                        verifyKeyElement.style.opacity = '0';
+                        setTimeout(() => {
+                            verifyKeyElement.textContent = `Verify Key: ${verifyKey}`;
+                            verifyKeyElement.style.opacity = '1';
+                        }, 300);
+                    }
+                    bootstrap.Modal.getInstance(document.getElementById('editModal')).hide();
+                } else {
+                    alert('Lỗi cập nhật');
+                }
             });
     }
 
@@ -250,14 +256,30 @@
             return;
         }
 
+        const formData = new FormData();
+        formData.append('ProductId', productId);
+        formData.append('VerifyKey', verifyKey);
+
         fetch('/Bai1/Create', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ productId, verifyKey })
+            body: formData
         })
             .then(response => {
-                if (response.ok) window.location.reload();
-                else alert('Lỗi cập nhật');
+                if (response.ok) {
+                    const verifyKeyElement = document.querySelector(`#product-${productId} .card-text:nth-child(4)`);
+                    if (verifyKeyElement) {
+                        verifyKeyElement.style.opacity = '0';
+                        setTimeout(() => {
+                            verifyKeyElement.textContent = `Verify Key: ${verifyKey}`;
+                            verifyKeyElement.style.opacity = '1';
+                        }, 300);
+                    }
+                    // Đóng modal và reset form
+                    bootstrap.Modal.getInstance(document.getElementById('createModal')).hide();
+                    document.getElementById('newVerifyKey').value = '';
+                } else {
+                    alert('Lỗi cập nhật');
+                }
             });
     }
 

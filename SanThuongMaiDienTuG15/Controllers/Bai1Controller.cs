@@ -52,17 +52,17 @@ namespace SanThuongMaiDienTuG15.Controllers
 
         [Authorize(Roles = "2")]
         [HttpPost]
-        public IActionResult Create([FromBody] Product product)
+        public IActionResult Create([FromForm] int productId, [FromForm] string verifyKey)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
 
             var sellerId = int.Parse(User.FindFirst("UserID").Value);
             var existingProduct = _context.Products.FirstOrDefault(
-                p => p.ProductId == product.ProductId && p.SellerId == sellerId);
+                p => p.ProductId == productId && p.SellerId == sellerId);
 
             if (existingProduct == null) return NotFound();
 
-            existingProduct.VerifyKey = product.VerifyKey;
+            existingProduct.VerifyKey = verifyKey;
             try
             {
                 _context.SaveChanges();
@@ -76,18 +76,18 @@ namespace SanThuongMaiDienTuG15.Controllers
 
         [Authorize(Roles = "2")]
         [HttpPost]
-        public IActionResult Edit([FromBody] Product updatedProduct)
+        public IActionResult Edit([FromForm] int productId, [FromForm] string verifyKey)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
             var sellerId = int.Parse(User.FindFirst("UserID").Value);
             var existingProduct = _context.Products.FirstOrDefault(
-                p => p.ProductId == updatedProduct.ProductId && p.SellerId == sellerId);
+                p => p.ProductId == productId && p.SellerId == sellerId);
 
             if (existingProduct == null) return NotFound();
 
-            existingProduct.VerifyKey = updatedProduct.VerifyKey;
+            existingProduct.VerifyKey = verifyKey;
             try
             {
                 _context.SaveChanges();
